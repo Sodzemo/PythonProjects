@@ -4,19 +4,14 @@ from flask_marshmallow import Marshmallow
 from flasgger import Swagger, swag_from
 
 app = Flask(__name__)
-
-# ✅ Set up Swagger BEFORE using it
 swagger = Swagger(app)
 
-# ✅ Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:5002@localhost:5432/mydata'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ✅ Initialize Database and Marshmallow
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-# ✅ Define the task model
 class Task(db.Model):
     __tablename__ = 'task'
     emp_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -27,17 +22,14 @@ class Task(db.Model):
         self.emp_name = emp_name
         self.emp_salary = emp_salary
 
-# ✅ Create a Marshmallow schema for the task model
 class TaskSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Task
         load_instance = True
 
-# ✅ Initialize Marshmallow schema
 task_schema = TaskSchema()
 tasks_schema = TaskSchema(many=True)
 
-# ✅ Route to create an employee (POST)
 @app.route('/task', methods=['POST'])
 @swag_from({
     'tags': ['Employee'],
@@ -75,7 +67,7 @@ def create_employee():
     db.session.add(emp)
     db.session.commit()
     return task_schema.jsonify(emp), 201
-# Route to get all employees (GET)
+
 @app.route('/task', methods=['GET'])
 @swag_from({
     'tags': ['Employee'],
@@ -100,11 +92,9 @@ def create_employee():
     }
 })
 def get_employees():
-    emp = Task.query.all()  # Query all employees from the task table
+    emp = Task.query.all()  
     return tasks_schema.jsonify(emp)
 
-
-# Route to get a single employee by ID (GET)
 @app.route('/task/<int:emp_id>', methods=['GET'])
 @swag_from({
     'tags': ['Employee'],
@@ -134,7 +124,7 @@ def get_employees():
     }
 })
 def get_employee(emp_id):
-    emp = Task.query.get_or_404(emp_id)  # Query the employee by emp_id or return 404 if not found
+    emp = Task.query.get_or_404(emp_id)  
     return task_schema.jsonify(emp)
 @app.route('/task/<int:emp_id>', methods=['PUT'])
 @swag_from({
@@ -176,14 +166,13 @@ def get_employee(emp_id):
     }
 })
 def update_employee(emp_id):
-    emp = Task.query.get_or_404(emp_id)  # Fetch employee by ID
+    emp = Task.query.get_or_404(emp_id)  
     data = request.get_json()
 
-    # Update employee details with the provided data
     emp.emp_name = data.get('emp_name', emp.emp_name)
     emp.emp_salary = data.get('emp_salary', emp.emp_salary)
 
-    db.session.commit()  # Commit the changes to the database
+    db.session.commit()  
     return jsonify({"message": "Employee updated successfully"}), 200
 @app.route('/task/<int:emp_id>', methods=['PATCH'])
 @swag_from({
@@ -264,8 +253,6 @@ def delete_employee(emp_id):
 
     return jsonify({"message": "Employee deleted successfully"}), 200
 
-
-# ✅ Run the app
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
